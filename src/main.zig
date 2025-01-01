@@ -378,9 +378,7 @@ fn securityCheck(r: zap.Request) !bool {
     return true;
 }
 
-// Updated security headers function to use config values
 fn setSecurityHeaders(r: zap.Request) !void {
-    // Basic security headers with static values
     try r.setHeader("X-Frame-Options", "DENY");
     try r.setHeader("X-Content-Type-Options", "nosniff");
     try r.setHeader("X-XSS-Protection", "1; mode=block");
@@ -388,6 +386,18 @@ fn setSecurityHeaders(r: zap.Request) !void {
     try r.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     try r.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
     try r.setHeader("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
+
+    if (config.extensions.tor.enabled) {
+        if (std.fs.cwd().openFile("hidden_service/hostname", .{})) |file| {
+            defer file.close();
+            var buf: [64]u8 = undefined;
+            if (file.reader().readUntilDelimiter(&buf, '\n')) |onion| {
+                const onion_url = try std.fmt.allocPrint(allocator, "http://{s}{s}", .{ onion, r.path orelse "/" });
+                defer allocator.free(onion_url);
+                try r.setHeader("Onion-Location", onion_url);
+            } else |_| {}
+        } else |_| {}
+    }
 
     // Basic CORS headers
     if (config.security.cors_enabled) {
@@ -421,7 +431,7 @@ const RequestContext = struct {
     }
 };
 
-// Add monitoring endpoint
+// monitoring endpoint
 fn handleMetrics(r: zap.Request) !void {
     if (!config.monitoring.enabled) {
         r.setStatus(.not_found);
@@ -455,7 +465,7 @@ fn handleMetrics(r: zap.Request) !void {
     try r.sendBody(stats);
 }
 
-// Add these structures after ServerMetrics
+// ServerMetrics
 const LoadMonitor = struct {
     cpu_usage: f64 = 0,
     memory_usage: f64 = 0,
@@ -482,10 +492,8 @@ const LoadMonitor = struct {
         const current_time = time.timestamp();
         if (current_time - self.last_check < CHECK_INTERVAL_MS / 1000) return;
 
-        // Update CPU usage
         self.cpu_usage = try getCpuUsage();
 
-        // Update memory usage
         self.memory_usage = try getMemoryUsage();
 
         self.last_check = current_time;
@@ -738,7 +746,6 @@ fn initConfig() !ServerConfig {
         .threads = 2,
         .workers = 1,
         .max_clients = 100000,
-        // ... other defaults ...
     };
 }
 

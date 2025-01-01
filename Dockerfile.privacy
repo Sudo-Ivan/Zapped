@@ -45,14 +45,22 @@ RUN apk add --no-cache \
     su-exec \
     bash
 
-# Create service user
+# Create service user and directories with correct permissions
 RUN adduser -D privacyuser && \
     mkdir -p /var/lib/tor && \
     mkdir -p /var/lib/i2pd && \
+    mkdir -p /var/log/i2pd && \
     mkdir -p /etc/i2pd && \
+    mkdir -p /etc/tor && \
     chown -R privacyuser:privacyuser /var/lib/tor && \
     chown -R privacyuser:privacyuser /var/lib/i2pd && \
-    chown -R privacyuser:privacyuser /etc/i2pd
+    chown -R privacyuser:privacyuser /var/log/i2pd && \
+    chown -R privacyuser:privacyuser /etc/i2pd && \
+    chown -R privacyuser:privacyuser /etc/tor && \
+    chmod 750 /var/lib/i2pd && \
+    chmod 750 /var/log/i2pd && \
+    chmod 700 /var/lib/tor && \
+    chmod 700 /etc/tor
 
 # Set up application directory with correct permissions
 WORKDIR /app
@@ -71,10 +79,6 @@ COPY --from=builder --chown=privacyuser:privacyuser /build/config/ ./config/
 
 # Copy static assets with correct ownership
 COPY --chown=privacyuser:privacyuser assets/ ./assets/
-
-# Copy configuration files with correct ownership
-COPY --chown=privacyuser:privacyuser config/torrc /etc/tor/torrc
-COPY --chown=privacyuser:privacyuser config/i2pd.conf /etc/i2pd/i2pd.conf
 
 # Environment variables
 ENV PORT=3000
