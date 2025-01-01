@@ -57,8 +57,11 @@ WORKDIR /app
 RUN mkdir -p uploads logs certs public config && \
     mkdir -p hidden_service && \
     mkdir -p i2p_service && \
+    mkdir -p /app/certs/live && \
     chmod 700 hidden_service && \
     chmod 700 i2p_service && \
+    chmod 755 /app/certs && \
+    chmod 755 /app/certs/live && \
     chown -R privacyuser:privacyuser /app
 
 VOLUME ["/var/lib/i2pd", "/app/hidden_service"]

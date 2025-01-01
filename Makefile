@@ -151,6 +151,11 @@ restart: stop rm
 restart-privacy: stop rm
 	make $(CONTAINER_ENGINE)-run-privacy
 
+check-certs:
+	@echo "Checking SSL certificates..."
+	@$(CONTAINER_ENGINE) exec zapped-privacy-ssl ls -la /app/certs/live/${DOMAIN}/ || \
+		echo "No certificates found for ${DOMAIN}. Make sure to set up SSL first."
+
 # Help target
 help:
 	@echo "Available targets:"
@@ -175,4 +180,5 @@ help:
 	@echo
 	@echo "Example usage:"
 	@echo "  make podman"
-	@echo "  make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com" 
+	@echo "  make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com"
+	@echo "  make check-certs DOMAIN=example.com - Check SSL certificate status" 

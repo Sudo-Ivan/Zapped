@@ -41,6 +41,8 @@ A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privac
    - [Tor](https://www.torproject.org/) (optional)
    - [I2P](https://geti2p.net/) (optional)
 
+## Podman
+
 ```bash
 git clone https://github.com/Sudo-Ivan/zapped.git
 cd zapped
@@ -55,18 +57,25 @@ make podman-run-privacy
 
 # With SSL
 make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com
+
+# Check SSL certificates
+make check-certs DOMAIN=example.com
+
+# Run with SSL + Tor + I2P
+make podman-run-privacy-ssl DOMAIN=example.com EMAIL=admin@example.com
+
+# Run with SSL + Tor
+make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com USE_I2P=false
 ```
 
 ## Privacy Features
 
 ### Tor Hidden Services
 - Automatic .onion address generation
-- Control port integration
 - Hidden service configuration
 
 ### I2P Integration
 - SAM bridge support
-- HTTP proxy (access .i2p sites)
 - I2P network tunnels
 
 ## Configuration
