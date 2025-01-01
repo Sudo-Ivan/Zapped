@@ -1,0 +1,146 @@
+{
+    "server": {
+        "port": 3000,
+        "host": "127.0.0.1",
+        "threads": 2,
+        "workers": 1,
+        "max_clients": 100000
+    },
+    "extensions": {
+        "tor": {
+            "enabled": false,
+            "hidden_service": true,
+            "port": 9050,
+            "control_port": 9051,
+            "control_password": "",
+            "virtual_port": 80,
+            "service_dir": "./hidden_service",
+            "allowed_ports": [80, 443]
+        },
+        "i2p": {
+            "enabled": false,
+            "sam_address": "127.0.0.1",
+            "sam_port": 7656,
+            "tunnel_name": "zapped-service",
+            "tunnel_length": 3,
+            "inbound_length": 3,
+            "outbound_length": 3,
+            "service_dir": "./i2p_service"
+        }
+    },
+    "features": {
+        "hot_reload": false,
+        "compression": true,
+        "logging": true
+    },
+    "security": {
+        "cors_enabled": true,
+        "cors_origins": ["*"],
+        "cors_methods": ["GET", "POST", "OPTIONS"],
+        "cors_headers": ["Content-Type"],
+        "cache_control": true,
+        "cache_max_age": 3600,
+        "headers": {
+            "x_frame_options": "DENY",
+            "x_content_type_options": "nosniff",
+            "x_xss_protection": "1; mode=block",
+            "strict_transport_security": "max-age=31536000; includeSubDomains",
+            "referrer_policy": "strict-origin-when-cross-origin"
+        },
+        "csrf_protection": true,
+        "csrf_token_length": 32,
+        "request_timeout_ms": 30000,
+        "max_request_size": 10485760,
+        "trusted_proxies": [
+            "127.0.0.1",
+            "::1"
+        ],
+        "content_security_policy": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline';",
+        "permissions_policy": "geolocation=(), camera=(), microphone=()",
+        "bot_protection": {
+            "enabled": true,
+            "block_bots": true,
+            "allowed_bots": [
+                "Googlebot",
+                "Bingbot",
+                "DuckDuckBot"
+            ],
+            "detection_rules": {
+                "request_rate": 30,
+                "time_window": 60,
+                "suspicious_patterns": true,
+                "check_headers": true,
+                "check_fingerprints": true
+            },
+            "suspicious_behaviors": {
+                "rapid_requests": true,
+                "parallel_requests": true,
+                "sequential_scanning": true,
+                "unusual_methods": true,
+                "suspicious_query_params": true
+            }
+        }
+    },
+    "monitoring": {
+        "enabled": true,
+        "endpoint": "/metrics",
+        "collect_memory_stats": true,
+        "collect_request_stats": true,
+        "auth_required": false,
+        "metrics": {
+            "unique_requests": true,
+            "total_requests": true,
+            "bot_requests": true,
+            "blocked_attempts": true,
+            "request_patterns": true
+        }
+    },
+    "compression": {
+        "level": 6,
+        "min_size": 1024,
+        "types": [
+            "text/html",
+            "text/css",
+            "text/javascript",
+            "application/javascript",
+            "application/json",
+            "image/svg+xml",
+            "text/plain",
+            "text/xml",
+            "application/xml",
+            "image/x-icon",
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "font/woff",
+            "font/woff2",
+            "application/font-woff",
+            "application/font-woff2"
+        ],
+        "brotli_enabled": true,
+        "brotli_quality": 4
+    },
+    "static": {
+        "enabled": true,
+        "root": "public",
+        "index": "index.html",
+        "cache": true,
+        "mime_types": {
+            ".html": "text/html; charset=utf-8",
+            ".css": "text/css; charset=utf-8",
+            ".woff2": "font/woff2",
+            ".woff": "font/woff",
+            ".ttf": "font/ttf",
+            ".eot": "application/vnd.ms-fontobject",
+            ".otf": "font/otf",
+            ".js": "application/javascript; charset=utf-8",
+            ".json": "application/json; charset=utf-8",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon"
+        }
+    }
+} 

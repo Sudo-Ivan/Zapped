@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="404 - Page Not Found">
+    <meta name="author" content="Sudo-Ivan">
+    
+    <!-- Theme Color for browsers -->
+    <meta name="theme-color" content="#2b2d42">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <title>404 - Page Not Found</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    
+    <!-- Preload fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/fonts/inter/inter.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">⚡ Zapped</div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                        <span id="themeIcon">🌞</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="hero error-page">
+            <h1>404</h1>
+            <p class="subtitle">Oops! Page Not Found</p>
+            <div class="error-content">
+                <p>The page you're looking for doesn't exist or has been moved.</p>
+                <a href="/" class="back-home">Back to Home</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built by Sudo-Ivan using Zig Zap.</p>
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeIcon.textContent = theme === 'dark' ? '🌙' : '🌞';
+            
+            document.querySelector('meta[name="theme-color"]').setAttribute(
+                'content', 
+                theme === 'dark' ? '#1a1b2e' : '#2b2d42'
+            );
+        }
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        const savedTheme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
+        setTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+
+        prefersDark.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    </script>
+</body>
+</html> 

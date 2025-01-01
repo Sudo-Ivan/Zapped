@@ -1,0 +1,10 @@
+.git
+.gitignore
+.cache
+zig-cache/
+zig-out/
+*.md
+tests/
+docs/
+.env*
+*.log 

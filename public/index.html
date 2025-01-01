@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A secure and fast Zig Zap web server with built-in privacy features">
+    <meta name="keywords" content="Zig, Web Server, Privacy, Security, Tor, I2P, Zap">
+    <meta name="author" content="Sudo-Ivan">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:title" content="Zapped">
+    <meta property="og:description" content="A secure and fast Zig Zap web server with built-in privacy features">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com">
+    <meta property="og:image" content="https://yourdomain.com/images/og-image.png">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Zapped">
+    <meta name="twitter:description" content="A secure and fast Zig Zap web server with built-in privacy features">
+    <meta name="twitter:image" content="https://yourdomain.com/images/twitter-card.png">
+    
+    <!-- Theme Color for browsers -->
+    <meta name="theme-color" content="#2b2d42">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <title>Zapped</title>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Preload fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="/fonts/inter/inter.css" type="text/css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">⚡ Zapped</div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                        <span id="themeIcon">🌞</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>Zig Zap Starter</h1>
+            <p class="subtitle">Get started with Zig Zap with this customized zap starter</p>
+            <div class="features">
+                <div class="feature">
+                    <h3>🚀 Performance</h3>
+                    <p>Built for speed with Zig</p>
+                </div>
+                <div class="feature">
+                    <h3>🔥 Hot Reload</h3>
+                    <p>Instant development updates</p>
+                </div>
+                <div class="feature">
+                    <h3>🛡️ Security</h3>
+                    <p>Built-in protection & Caddy proxy</p>
+                </div>
+                <div class="feature">
+                    <h3>📦 Asset Optimization</h3>
+                    <p>Compression & caching</p>
+                </div>
+                <div class="feature">
+                    <h3>
+                        <img src="/assets/tor.png" alt="Tor" class="feature-icon" />
+                        Tor Network
+                    </h3>
+                    <p>.onion hidden services</p>
+                </div>
+                <div class="feature">
+                    <h3>
+                        <img src="/assets/i2p.png" alt="I2P" class="feature-icon" />
+                        I2P Network
+                    </h3>
+                    <p>.i2p private tunnels</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Monitoring</h3>
+                    <p>Built-in metrics endpoint</p>
+                </div>
+                <div class="feature">
+                    <h3>🔧 Configurable</h3>
+                    <p>Easy JSON configuration</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built by Sudo-Ivan using Zig Zap.</p>
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeIcon.textContent = theme === 'dark' ? '🌙' : '🌞';
+            
+            document.querySelector('meta[name="theme-color"]').setAttribute(
+                'content', 
+                theme === 'dark' ? '#1a1b2e' : '#2b2d42'
+            );
+        }
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        const savedTheme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
+        setTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+
+        prefersDark.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    </script>
+
+    <style>
+    .feature-icon {
+        height: 24px;
+        width: 24px;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+
+    .feature h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    </style>
+</body>
+</html>
