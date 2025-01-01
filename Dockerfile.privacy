@@ -24,7 +24,6 @@ COPY --chown=builder:builder zapped.json ./
 COPY --chown=builder:builder public/ ./public/
 COPY --chown=builder:builder config/ ./config/
 
-# Build with privacy features enabled
 RUN zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 
 FROM alpine:3.21.0
@@ -32,7 +31,6 @@ FROM alpine:3.21.0
 RUN apk add --no-cache \
     tor \
     i2pd \
-    certbot \
     openssl \
     su-exec \
     bash
@@ -64,7 +62,7 @@ RUN mkdir -p uploads logs certs public config && \
     chmod 755 /app/certs/live && \
     chown -R privacyuser:privacyuser /app
 
-VOLUME ["/var/lib/i2pd", "/app/hidden_service"]
+VOLUME ["/var/lib/i2pd", "/app/hidden_service", "/app/certs"]
 
 COPY --from=builder --chown=privacyuser:privacyuser /build/zig-out/bin/zapped-starter ./
 COPY --from=builder --chown=privacyuser:privacyuser /build/zapped.json ./

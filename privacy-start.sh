@@ -1,23 +1,19 @@
 #!/bin/bash
 
-# Function to log messages with timestamps
 log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Function to check if a service is running
 check_service() {
     pgrep -f "$1" >/dev/null
     return $?
 }
 
-# Function to handle errors
 handle_error() {
     log_message "ERROR: $1"
     exit 1
 }
 
-# Function to verify SSL certificates
 verify_ssl_certs() {
     local domain=$1
     local cert_path="/app/certs/live/${domain}"
@@ -27,37 +23,33 @@ verify_ssl_certs() {
     if [ ! -d "$cert_path" ]; then
         log_message "ERROR: Certificate directory not found: ${cert_path}"
         return 1
-    }
+    fi
     
     if [ ! -f "${cert_path}/fullchain.pem" ]; then
         log_message "ERROR: fullchain.pem not found"
         return 1
-    }
+    fi
     
     if [ ! -f "${cert_path}/privkey.pem" ]; then
         log_message "ERROR: privkey.pem not found"
         return 1
-    }
+    fi
     
-    # Verify certificate validity
     openssl x509 -in "${cert_path}/fullchain.pem" -text -noout > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         log_message "ERROR: Invalid certificate"
         return 1
-    }
+    fi
     
-    # Get certificate expiry date
     local expiry=$(openssl x509 -in "${cert_path}/fullchain.pem" -enddate -noout | cut -d= -f2)
     log_message "Certificate valid until: ${expiry}"
     
-    # Get certificate subject
     local subject=$(openssl x509 -in "${cert_path}/fullchain.pem" -subject -noout)
     log_message "Certificate subject: ${subject}"
     
     return 0
 }
 
-# Create Tor configuration
 cat > /etc/tor/torrc << EOL || handle_error "Failed to create torrc"
 SocksPort 127.0.0.1:9050
 
@@ -71,41 +63,6 @@ RunAsDaemon 1
 CookieAuthentication 1
 EOL
 
-# Create I2P tunnel config
-cat > /etc/i2pd/tunnels.conf << EOL || handle_error "Failed to create tunnels.conf"
-[zapped-http]
-type = http
-host = 127.0.0.1
-port = 3000
-inport = 80
-keys = /var/lib/i2pd/zapped-keys.dat
-EOL
-
-# Create I2P main config
-cat > /etc/i2pd/i2pd.conf << EOL || handle_error "Failed to create i2pd.conf"
-datadir = /var/lib/i2pd
-logfile = /var/log/i2pd/i2pd.log
-loglevel = info
-
-[sam]
-enabled = true
-address = 0.0.0.0
-port = 7656
-
-[httpproxy]
-enabled = true
-address = 0.0.0.0
-port = 4444
-
-[ntcp2]
-enabled = true
-port = 9000
-
-[limits]
-transittunnels = 1000
-EOL
-
-# Ensure hidden service directory exists with correct permissions
 mkdir -p /app/hidden_service
 chmod 700 /app/hidden_service
 chown -R privacyuser:privacyuser /app/hidden_service
@@ -141,31 +98,30 @@ fi
 # Start I2P only if enabled
 if [ "$USE_I2P" = "true" ]; then
     cat > /etc/i2pd/tunnels.conf << EOL || handle_error "Failed to create tunnels.conf"
-    [zapped-http]
-    type = http
-    host = 127.0.0.1
-    port = 3000
-    inport = 80
-    keys = /var/lib/i2pd/zapped-keys.dat
+[zapped-http]
+type = http
+host = 127.0.0.1
+port = 3000
+inport = 80
+keys = /var/lib/i2pd/zapped-keys.dat
 EOL
 
-    # Create I2P main config
     cat > /etc/i2pd/i2pd.conf << EOL || handle_error "Failed to create i2pd.conf"
-    datadir = /var/lib/i2pd
-    logfile = /var/log/i2pd/i2pd.log
-    loglevel = info
+datadir = /var/lib/i2pd
+logfile = /var/log/i2pd/i2pd.log
+loglevel = info
 
-    [sam]
-    enabled = true
-    address = 0.0.0.0
-    port = 7656
+[sam]
+enabled = true
+address = 0.0.0.0
+port = 7656
 
-    [ntcp2]
-    enabled = true
-    port = 9000
+[ntcp2]
+enabled = true
+port = 9000
 
-    [limits]
-    transittunnels = 1000
+[limits]
+transittunnels = 1000
 EOL
 
     # Start I2P in background
@@ -175,12 +131,17 @@ else
     log_message "I2P disabled, skipping..."
 fi
 
-# Verify SSL certificates if SSL is enabled
+# Handle SSL certificate generation if needed
 if [ "$USE_SSL" = "true" ]; then
     log_message "SSL enabled, verifying certificates..."
     if [ -z "$DOMAIN" ]; then
         handle_error "SSL enabled but no domain specified"
     fi
+    
+    # Create certs directory and link certificates
+    mkdir -p "/app/certs/live/$DOMAIN"
+    ln -sf "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "/app/certs/live/$DOMAIN/fullchain.pem"
+    ln -sf "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "/app/certs/live/$DOMAIN/privkey.pem"
     
     if verify_ssl_certs "$DOMAIN"; then
         log_message "SSL certificates verified successfully"
@@ -189,7 +150,6 @@ if [ "$USE_SSL" = "true" ]; then
     fi
 fi
 
-# Start the Zap server
 log_message "Starting Zap server..."
 if [ "$USE_SSL" = "true" ] && [ -d "/app/certs/live/$DOMAIN" ]; then
     log_message "Starting with SSL on port $PORT"

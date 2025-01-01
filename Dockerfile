@@ -29,15 +29,22 @@ RUN zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 FROM alpine:3.21.0
 
 RUN apk add --no-cache \
-    certbot \
     openssl \
     bash
 
-RUN adduser -D appuser
+RUN adduser -D appuser && \
+    mkdir -p /etc/letsencrypt && \
+    chown -R appuser:appuser /etc/letsencrypt && \
+    chmod 755 /etc/letsencrypt
 
 WORKDIR /app
 RUN mkdir -p uploads logs certs public config && \
+    mkdir -p /app/certs/live && \
+    chmod 755 /app/certs && \
+    chmod 755 /app/certs/live && \
     chown -R appuser:appuser /app
+
+VOLUME ["/app/certs"]
 
 COPY --from=builder --chown=appuser:appuser /build/zig-out/bin/zapped-starter ./
 COPY --from=builder --chown=appuser:appuser /build/zapped.json ./
@@ -46,14 +53,13 @@ COPY --from=builder --chown=appuser:appuser /build/config/ ./config/
 
 COPY --chown=appuser:appuser assets/ ./assets/
 
-ENV PORT=3000
-ENV HOST=0.0.0.0
-ENV USE_SSL=false
-ENV DOMAIN=""
-ENV EMAIL=""
+ENV PORT=3000 \
+    HOST=0.0.0.0 \
+    USE_SSL=false \
+    DOMAIN="" \
+    EMAIL=""
 
-EXPOSE 3000
-EXPOSE 3443
+EXPOSE 3000 3443
 
 COPY --chown=appuser:appuser start.sh ./
 RUN chmod +x start.sh
