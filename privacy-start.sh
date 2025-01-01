@@ -93,9 +93,42 @@ else
     handle_error "Tor failed to create hidden service after ${TOR_TIMEOUT} seconds"
 fi
 
-# Start I2P in background
-log_message "Starting I2P in background..."
-i2pd --daemon --conf=/etc/i2pd/i2pd.conf --tunconf=/etc/i2pd/tunnels.conf &
+# Start I2P only if enabled
+if [ "$USE_I2P" = "true" ]; then
+    cat > /etc/i2pd/tunnels.conf << EOL || handle_error "Failed to create tunnels.conf"
+    [zapped-http]
+    type = http
+    host = 127.0.0.1
+    port = 3000
+    inport = 80
+    keys = /var/lib/i2pd/zapped-keys.dat
+EOL
+
+    # Create I2P main config
+    cat > /etc/i2pd/i2pd.conf << EOL || handle_error "Failed to create i2pd.conf"
+    datadir = /var/lib/i2pd
+    logfile = /var/log/i2pd/i2pd.log
+    loglevel = info
+
+    [sam]
+    enabled = true
+    address = 0.0.0.0
+    port = 7656
+
+    [ntcp2]
+    enabled = true
+    port = 9000
+
+    [limits]
+    transittunnels = 1000
+EOL
+
+    # Start I2P in background
+    log_message "Starting I2P in background..."
+    i2pd --daemon --conf=/etc/i2pd/i2pd.conf --tunconf=/etc/i2pd/tunnels.conf &
+else
+    log_message "I2P disabled, skipping..."
+fi
 
 # Start the Zap server
 log_message "Starting Zap server..."

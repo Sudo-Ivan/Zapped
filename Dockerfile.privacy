@@ -1,17 +1,13 @@
-# Build stage
-FROM alpine:3.21.0 as builder
+FROM alpine:3.21.0 AS builder
 
-# Install zig and build dependencies
 RUN apk add --no-cache \
     zig \
     musl-dev \
     gcc \
     git
 
-# Create non-root user for build
 RUN adduser -D builder
 
-# Set up build directory
 WORKDIR /build
 RUN chown builder:builder /build && \
     mkdir -p /build/public /build/config && \
@@ -19,10 +15,8 @@ RUN chown builder:builder /build && \
 
 USER builder
 
-# Clone Zap dependency
 RUN git clone https://github.com/zigzap/zap.git /build/zap
 
-# Copy build files
 COPY --chown=builder:builder build.zig ./
 COPY --chown=builder:builder build.zig.zon ./
 COPY --chown=builder:builder src/ ./src/
@@ -33,10 +27,8 @@ COPY --chown=builder:builder config/ ./config/
 # Build with privacy features enabled
 RUN zig build -Doptimize=ReleaseSafe -Dtarget=x86_64-linux-musl
 
-# Privacy-focused production stage
 FROM alpine:3.21.0
 
-# Install Tor, I2P and certbot
 RUN apk add --no-cache \
     tor \
     i2pd \
@@ -45,7 +37,6 @@ RUN apk add --no-cache \
     su-exec \
     bash
 
-# Create service user and directories with correct permissions
 RUN adduser -D privacyuser && \
     mkdir -p /var/lib/tor && \
     mkdir -p /var/lib/i2pd && \
@@ -62,7 +53,6 @@ RUN adduser -D privacyuser && \
     chmod 700 /var/lib/tor && \
     chmod 700 /etc/tor
 
-# Set up application directory with correct permissions
 WORKDIR /app
 RUN mkdir -p uploads logs certs public config && \
     mkdir -p hidden_service && \
@@ -71,35 +61,26 @@ RUN mkdir -p uploads logs certs public config && \
     chmod 700 i2p_service && \
     chown -R privacyuser:privacyuser /app
 
-# Copy application files
+VOLUME ["/var/lib/i2pd", "/app/hidden_service"]
+
 COPY --from=builder --chown=privacyuser:privacyuser /build/zig-out/bin/zapped-starter ./
 COPY --from=builder --chown=privacyuser:privacyuser /build/zapped.json ./
 COPY --from=builder --chown=privacyuser:privacyuser /build/public/ ./public/
 COPY --from=builder --chown=privacyuser:privacyuser /build/config/ ./config/
 
-# Copy static assets with correct ownership
 COPY --chown=privacyuser:privacyuser assets/ ./assets/
 
-# Environment variables
-ENV PORT=3000
-ENV HOST=0.0.0.0
-ENV USE_SSL=false
-ENV DOMAIN=""
-ENV EMAIL=""
-ENV TOR_PORT=9050
-ENV I2P_SAM_PORT=7656
-ENV I2P_HTTP_PROXY=4444
+ENV PORT=3000 \
+    HOST=0.0.0.0 \
+    USE_SSL=false \
+    USE_I2P=false \
+    DOMAIN="" \
+    EMAIL="" \
+    TOR_PORT=9050 \
+    I2P_SAM_PORT=7656
 
-# Expose ports (web, privacy services, and transport)
-EXPOSE 3000
-EXPOSE 3443
-EXPOSE 9050
-EXPOSE 9051
-EXPOSE 7656
-EXPOSE 4444
-EXPOSE 9000
+EXPOSE 3000 3443 9050 7656
 
-# Copy and set up startup script
 COPY --chown=privacyuser:privacyuser privacy-start.sh ./
 RUN chmod +x privacy-start.sh
 

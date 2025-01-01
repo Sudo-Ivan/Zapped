@@ -387,17 +387,18 @@ fn setSecurityHeaders(r: zap.Request) !void {
     try r.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
     try r.setHeader("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
 
-    if (config.extensions.tor.enabled) {
-        if (std.fs.cwd().openFile("hidden_service/hostname", .{})) |file| {
-            defer file.close();
-            var buf: [64]u8 = undefined;
-            if (file.reader().readUntilDelimiter(&buf, '\n')) |onion| {
-                const onion_url = try std.fmt.allocPrint(allocator, "http://{s}{s}", .{ onion, r.path orelse "/" });
-                defer allocator.free(onion_url);
-                try r.setHeader("Onion-Location", onion_url);
-            } else |_| {}
-        } else |_| {}
-    }
+    // Add Onion-Location header if available
+    const onion_path = "/app/hidden_service/hostname";
+    if (std.fs.openFileAbsolute(onion_path, .{ .mode = .read_only })) |file| {
+        defer file.close();
+        var buf: [64]u8 = undefined;
+        const onion = file.reader().readUntilDelimiterOrEof(&buf, '\n') catch return;
+        if (onion) |addr| {
+            const onion_url = try std.fmt.allocPrint(allocator, "http://{s}{s}", .{ addr, r.path orelse "/" });
+            defer allocator.free(onion_url);
+            try r.setHeader("Onion-Location", onion_url);
+        }
+    } else |_| {}
 
     // Basic CORS headers
     if (config.security.cors_enabled) {

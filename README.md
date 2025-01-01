@@ -6,7 +6,7 @@ A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privac
 > Still security testing, not ready for production use. Use at your own risk.
 
 > [!IMPORTANT]
-> I2P takes 5-15 minutes to start up. See [COMMANDS.md](COMMANDS.md) for more information.
+> I2P takes 5-15 minutes to start up initially. See [COMMANDS.md](COMMANDS.md) for more information.
 
 ## Features
 

@@ -68,18 +68,24 @@ podman-run:
 
 # Run privacy container
 docker-run-privacy:
+	docker volume create i2pd-data || true
 	docker run --name zapped-privacy -p 80:3000 -p 443:3443 \
-		-p 9050:9050 -p 7656:7656 -p 4444:4444 \
+		-p 9050:9050 \
+		$(if $(USE_I2P),-p 7656:7656 -v i2pd-data:/var/lib/i2pd) \
 		-e HOST=0.0.0.0 \
 		-e PORT=3000 \
+		-e USE_I2P=$(USE_I2P) \
 		zapped-privacy
 
 podman-run-privacy:
+	podman volume create i2pd-data || true
 	podman run --name zapped-privacy --privileged --userns=keep-id \
 		-p 80:3000 -p 443:3443 \
-		-p 9050:9050 -p 7656:7656 -p 4444:4444 \
+		-p 9050:9050 \
+		$(if $(USE_I2P),-p 7656:7656 -v i2pd-data:/var/lib/i2pd:Z) \
 		-e HOST=0.0.0.0 \
 		-e PORT=3000 \
+		-e USE_I2P=$(USE_I2P) \
 		zapped-privacy
 
 # Run with SSL
@@ -104,22 +110,28 @@ podman-run-ssl:
 
 # Run privacy build with SSL
 docker-run-privacy-ssl:
+	docker volume create i2pd-data || true
 	docker run --name zapped-privacy-ssl -p 80:3000 -p 443:3443 \
-		-p 9050:9050 -p 7656:7656 -p 4444:4444 \
+		-p 9050:9050 \
+		$(if $(USE_I2P),-p 7656:7656 -v i2pd-data:/var/lib/i2pd) \
 		-e HOST=0.0.0.0 \
 		-e PORT=3443 \
 		-e USE_SSL=true \
+		-e USE_I2P=$(USE_I2P) \
 		-e DOMAIN=${DOMAIN} \
 		-e EMAIL=${EMAIL} \
 		zapped-privacy
 
 podman-run-privacy-ssl:
+	podman volume create i2pd-data || true
 	podman run --name zapped-privacy-ssl --privileged --userns=keep-id \
 		-p 80:3000 -p 443:3443 \
-		-p 9050:9050 -p 7656:7656 -p 4444:4444 \
+		-p 9050:9050 \
+		$(if $(USE_I2P),-p 7656:7656 -v i2pd-data:/var/lib/i2pd:Z) \
 		-e HOST=0.0.0.0 \
 		-e PORT=3443 \
 		-e USE_SSL=true \
+		-e USE_I2P=$(USE_I2P) \
 		-e DOMAIN=${DOMAIN} \
 		-e EMAIL=${EMAIL} \
 		zapped-privacy
@@ -130,6 +142,8 @@ stop:
 
 rm:
 	$(CONTAINER_ENGINE) rm zapped-standard zapped-privacy zapped-ssl zapped-privacy-ssl 2>/dev/null || true
+	# Uncomment the next line if you want to remove the volume on container cleanup
+	# $(CONTAINER_ENGINE) volume rm i2pd-data 2>/dev/null || true
 
 restart: stop rm
 	make $(CONTAINER_ENGINE)-run
