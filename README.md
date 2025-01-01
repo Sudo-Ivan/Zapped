@@ -3,10 +3,7 @@
 A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privacy features.
 
 > [!WARNING]  
-> Still security testing, not ready for production use. Use at your own risk.
-
-> [!IMPORTANT]
-> I2P takes 5-15 minutes to start up initially. See [COMMANDS.md](COMMANDS.md) for more information.
+> Still early development and security testing, Use at your own risk.
 
 ## Zapped Features
 
@@ -47,31 +44,49 @@ A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privac
    - [Tor](https://www.torproject.org/) (optional)
    - [I2P](https://geti2p.net/) (optional)
 
-## Podman
+2. Drop your website into the `public` directory.
+
+3. Edit `zapped.json` to your liking.
+
+4. Run the following commands:
+
+> Replace docker with podman to use Podman instead of Docker.
+
+```bash
+make docker
+make docker-run
+```
+or with Tor:
+
+```bash
+make docker-privacy
+make docker-run-privacy USE_I2P=false # change to true to use I2P
+```
 
 ```bash
 git clone https://github.com/Sudo-Ivan/zapped.git
 cd zapped
-
-# Standard build
-make podman
-make podman-run
-
-# Privacy-enhanced build with Tor/I2P
-make podman-privacy
-make podman-run-privacy
+```
 
 # With SSL
-make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com
+
+> make sure port 80/443 is open on server
+
+```bash
+make docker-run-ssl DOMAIN=example.com EMAIL=admin@example.com
+```
 
 # Check SSL certificates
+```bash
 make check-certs DOMAIN=example.com
+```
 
 # Run with SSL + Tor + I2P
-make podman-run-privacy-ssl DOMAIN=example.com EMAIL=admin@example.com
+```bash
+make docker-run-privacy-ssl DOMAIN=example.com EMAIL=admin@example.com
 
 # Run with SSL + Tor
-make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com USE_I2P=false
+make docker-run-ssl DOMAIN=example.com EMAIL=admin@example.com USE_I2P=true
 ```
 
 ## Privacy Features
@@ -79,6 +94,7 @@ make podman-run-ssl DOMAIN=example.com EMAIL=admin@example.com USE_I2P=false
 ### Tor Hidden Services
 - Automatic .onion address generation
 - Hidden service configuration
+- Onion-Location Header
 
 ### I2P Integration
 - SAM bridge support
@@ -96,7 +112,7 @@ Edit `zapped.json` to customize:
 - CORS settings
 - Rate limiting
 
-## Port Configuration
+## Port Configuration Issues
 
 For non-root port binding (80/443), you can either:
 
