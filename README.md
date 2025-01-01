@@ -2,6 +2,9 @@
 
 A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privacy features.
 
+> [!WARNING]  
+> Still security testing, not ready for production use. Use at your own risk.
+
 ## Features
 
 - 🔥 Hot Reloading
@@ -85,11 +88,3 @@ sudo sysctl net.ipv4.ip_unprivileged_port_start=80
 ```
 
 2. Or use higher ports (3000/3443) with reverse proxy
-
-## License
-
-MIT
-
-```bash
-sudo sysctl net.ipv4.ip_unprivileged_port_start=80
-sudo sysctl net.ipv4.ip_unprivileged_port_start=443
