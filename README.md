@@ -19,7 +19,7 @@ A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privac
   - Security headers
   - IP blacklisting
 - 🕶️ Privacy Features
-  - Tor hidden services (.onion)
+  - Tor hidden services (.onion) (Onion-Location Header)
   - I2P network support (.i2p)
   - SAM bridge integration
   - Private networking
