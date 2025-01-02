@@ -8,7 +8,7 @@
     },
     "extensions": {
         "tor": {
-            "enabled": false,
+            "enabled": true,
             "hidden_service": true,
             "port": 9050,
             "control_port": 9051,
@@ -123,6 +123,23 @@
     "static": {
         "enabled": true,
         "root": "public",
+        "allowed_root_files": [
+            "index.html",
+            "404.html",
+            "docs.html",
+            "about.html",
+            "favicon.ico",
+            "robots.txt",
+            "sitemap.xml"
+        ],
+        "allowed_directories": [
+            "/public/",
+            "/css/",
+            "/js/",
+            "/fonts/",
+            "/images/",
+            "/assets/"
+        ],
         "index": "index.html",
         "cache": true,
         "mime_types": {

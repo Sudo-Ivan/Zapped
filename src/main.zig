@@ -90,6 +90,14 @@ const ServerConfig = struct {
             .service_dir = "./i2p_service",
         },
     } = .{},
+    static: struct {
+        enabled: bool = true,
+        root: []const u8 = "public",
+        allowed_root_files: [][]const u8 = undefined,
+        allowed_directories: [][]const u8 = undefined,
+        index: []const u8 = "index.html",
+        cache: bool = true,
+    } = .{},
 };
 
 var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -230,11 +238,14 @@ fn loadConfig() !void {
 }
 
 fn sendFile(r: zap.Request, file_path: []const u8, content_type: []const u8) !void {
-    const full_path = try std.fs.path.join(allocator, &.{ "public", file_path });
-    defer allocator.free(full_path);
+    // Remove leading slash if present
+    const clean_path = if (std.mem.startsWith(u8, file_path, "/"))
+        file_path[1..]
+    else
+        file_path;
 
-    const file = std.fs.cwd().openFile(full_path, .{}) catch |err| {
-        std.debug.print("Failed to open file '{s}': {}\n", .{ full_path, err });
+    const file = std.fs.cwd().openFile(clean_path, .{}) catch |err| {
+        std.debug.print("Failed to open file '{s}': {}\n", .{ clean_path, err });
         r.setStatus(.not_found);
         try r.sendBody("404 - File Not Found");
         return error.FileNotFound;
@@ -268,23 +279,31 @@ fn sendFile(r: zap.Request, file_path: []const u8, content_type: []const u8) !vo
 }
 
 fn getMimeType(file_path: []const u8) []const u8 {
-    // Images
-    if (std.mem.endsWith(u8, file_path, ".png")) return "image/png";
-    if (std.mem.endsWith(u8, file_path, ".jpg") or std.mem.endsWith(u8, file_path, ".jpeg")) return "image/jpeg";
-    if (std.mem.endsWith(u8, file_path, ".gif")) return "image/gif";
-    if (std.mem.endsWith(u8, file_path, ".svg")) return "image/svg+xml";
-    if (std.mem.endsWith(u8, file_path, ".ico")) return "image/x-icon";
-    if (std.mem.endsWith(u8, file_path, ".webp")) return "image/webp";
+    const ext = std.fs.path.extension(file_path);
 
-    // Other types...
-    if (std.mem.endsWith(u8, file_path, ".html")) return "text/html; charset=utf-8";
-    if (std.mem.endsWith(u8, file_path, ".css")) return "text/css; charset=utf-8";
-    if (std.mem.endsWith(u8, file_path, ".js")) return "application/javascript; charset=utf-8";
-    if (std.mem.endsWith(u8, file_path, ".woff")) return "font/woff";
-    if (std.mem.endsWith(u8, file_path, ".woff2")) return "font/woff2";
-    if (std.mem.endsWith(u8, file_path, ".ttf")) return "font/ttf";
-    if (std.mem.endsWith(u8, file_path, ".eot")) return "application/vnd.ms-fontobject";
-    if (std.mem.endsWith(u8, file_path, ".otf")) return "font/otf";
+    // Simple string comparison for extensions
+    if (std.mem.eql(u8, ext, ".html")) return "text/html; charset=utf-8";
+    if (std.mem.eql(u8, ext, ".css")) return "text/css; charset=utf-8";
+    if (std.mem.eql(u8, ext, ".js")) return "application/javascript; charset=utf-8";
+    if (std.mem.eql(u8, ext, ".json")) return "application/json; charset=utf-8";
+    if (std.mem.eql(u8, ext, ".png")) return "image/png";
+    if (std.mem.eql(u8, ext, ".jpg") or std.mem.eql(u8, ext, ".jpeg")) return "image/jpeg";
+    if (std.mem.eql(u8, ext, ".gif")) return "image/gif";
+    if (std.mem.eql(u8, ext, ".svg")) return "image/svg+xml";
+    if (std.mem.eql(u8, ext, ".ico")) return "image/x-icon";
+    if (std.mem.eql(u8, ext, ".woff")) return "font/woff";
+    if (std.mem.eql(u8, ext, ".woff2")) return "font/woff2";
+    if (std.mem.eql(u8, ext, ".ttf")) return "font/ttf";
+    if (std.mem.eql(u8, ext, ".otf")) return "font/otf";
+    if (std.mem.eql(u8, ext, ".eot")) return "application/vnd.ms-fontobject";
+    if (std.mem.eql(u8, ext, ".pdf")) return "application/pdf";
+    if (std.mem.eql(u8, ext, ".txt")) return "text/plain; charset=utf-8";
+    if (std.mem.eql(u8, ext, ".xml")) return "application/xml";
+    if (std.mem.eql(u8, ext, ".webp")) return "image/webp";
+    if (std.mem.eql(u8, ext, ".mp4")) return "video/mp4";
+    if (std.mem.eql(u8, ext, ".webm")) return "video/webm";
+    if (std.mem.eql(u8, ext, ".mp3")) return "audio/mpeg";
+    if (std.mem.eql(u8, ext, ".wav")) return "audio/wav";
 
     return "application/octet-stream";
 }
@@ -649,62 +668,67 @@ fn on_request(r: zap.Request) void {
     };
 
     if (r.path) |the_path| {
-        // Add metrics endpoint handling
-        if (std.mem.eql(u8, the_path, "/metrics")) {
-            handleMetrics(r) catch |err| {
-                std.debug.print("Error serving metrics: {}\n", .{err});
-                r.setStatus(.internal_server_error);
-                r.sendBody("Internal Server Error") catch return;
-            };
-            return;
-        }
-
-        // Serve index.html for root path
+        // Handle root path
         if (std.mem.eql(u8, the_path, "/")) {
-            sendFile(r, "index.html", "text/html; charset=utf-8") catch |err| {
+            sendFile(r, "public/index.html", "text/html; charset=utf-8") catch |err| {
                 std.debug.print("Error serving index: {}\n", .{err});
                 serveNotFound(r);
             };
             return;
         }
 
-        // Handle static files
-        if (std.mem.startsWith(u8, the_path, "/public/") or
-            std.mem.startsWith(u8, the_path, "/css/") or
-            std.mem.startsWith(u8, the_path, "/js/") or
-            std.mem.startsWith(u8, the_path, "/fonts/") or
-            std.mem.startsWith(u8, the_path, "/images/"))
+        // Handle direct HTML requests (like /docs, /about)
+        if (std.mem.endsWith(u8, the_path, ".html") or
+            (std.mem.indexOf(u8, the_path, ".") == null and !std.mem.endsWith(u8, the_path, "/")))
         {
-            const file_path = the_path[1..];
-            const mime_type = getMimeType(file_path);
-            sendFile(r, file_path, mime_type) catch |err| {
-                std.debug.print("Error serving file '{s}': {}\n", .{ file_path, err });
+            const html_path = if (std.mem.endsWith(u8, the_path, ".html"))
+                std.fmt.allocPrint(allocator, "public{s}", .{the_path}) catch {
+                    serveNotFound(r);
+                    return;
+                }
+            else
+                std.fmt.allocPrint(allocator, "public{s}.html", .{the_path}) catch {
+                    serveNotFound(r);
+                    return;
+                };
+            defer allocator.free(html_path);
+
+            sendFile(r, html_path, "text/html; charset=utf-8") catch |err| {
+                std.debug.print("Error serving HTML: {}\n", .{err});
                 serveNotFound(r);
             };
             return;
         }
 
-        // Handle assets directory explicitly
-        if (std.mem.startsWith(u8, the_path, "/assets/")) {
-            const file_path = the_path[1..]; // Remove leading slash
-            const mime_type = getMimeType(file_path);
-            sendFile(r, file_path, mime_type) catch |err| {
-                std.debug.print("Error serving asset '{s}': {}\n", .{ file_path, err });
-                serveNotFound(r);
-            };
+        // Handle other static files
+        if (!isPathSafe(the_path)) {
+            serveNotFound(r);
             return;
         }
 
-        // Handle unmatched routes
-        serveNotFound(r);
+        const file_path = if (std.mem.startsWith(u8, the_path, "/public/"))
+            the_path
+        else
+            std.fmt.allocPrint(allocator, "public{s}", .{the_path}) catch {
+                serveNotFound(r);
+                return;
+            };
+        defer if (!std.mem.startsWith(u8, the_path, "/public/")) allocator.free(file_path);
+
+        const mime_type = getMimeType(file_path);
+        sendFile(r, file_path, mime_type) catch |err| {
+            std.debug.print("Error serving file '{s}': {}\n", .{ file_path, err });
+            serveNotFound(r);
+        };
     }
 }
 
 fn serveNotFound(r: zap.Request) void {
-    sendFile(r, "404.html", "text/html; charset=utf-8") catch |err| {
-        std.debug.print("Error serving 404 page: {}\n", .{err});
+    // Try to serve custom 404 page
+    sendFile(r, "public/404.html", "text/html; charset=utf-8") catch {
+        // Fallback to basic 404 response if custom page fails
         r.setStatus(.not_found);
-        r.sendBody("404 - Not Found") catch return;
+        r.sendBody("404 - Page Not Found") catch return;
     };
 }
 
@@ -790,6 +814,49 @@ fn validateCsrfToken(token: []const u8, stored_token: []const u8) bool {
 var tor_extension: extensions.TorExtension = undefined;
 var i2p_extension: extensions.I2PExtension = undefined;
 
+fn scanPublicDirectory() !void {
+    var public_dir = try std.fs.cwd().openDir("public", .{ .iterate = true });
+    defer public_dir.close();
+
+    var walker = try public_dir.walk(allocator);
+    defer walker.deinit();
+
+    var files = std.ArrayList([]const u8).init(allocator);
+    defer files.deinit();
+
+    var directories = std.ArrayList([]const u8).init(allocator);
+    defer directories.deinit();
+
+    // Add root public dir
+    try directories.append(try allocator.dupe(u8, "/public/"));
+
+    while (try walker.next()) |entry| {
+        switch (entry.kind) {
+            .file => try files.append(try allocator.dupe(u8, entry.path)),
+            .directory => try directories.append(try std.fmt.allocPrint(allocator, "/public/{s}/", .{entry.path})),
+            else => continue,
+        }
+    }
+
+    // Update config with found files and directories
+    if (config.static.allowed_root_files.len > 0) {
+        for (config.static.allowed_root_files) |file| {
+            allocator.free(file);
+        }
+        allocator.free(config.static.allowed_root_files);
+    }
+
+    if (config.static.allowed_directories.len > 0) {
+        for (config.static.allowed_directories) |directory| {
+            allocator.free(directory);
+        }
+        allocator.free(config.static.allowed_directories);
+    }
+
+    config.static.allowed_root_files = try files.toOwnedSlice();
+    config.static.allowed_directories = try directories.toOwnedSlice();
+}
+
 pub fn main() !void {
     // Initialize security context
     security_ctx = try SecurityContext.init();
@@ -812,7 +879,13 @@ pub fn main() !void {
         .log = config.features.logging,
         .max_clients = config.max_clients,
     });
-    try listener.listen();
+
+    // Try to listen with error handling
+    listener.listen() catch |err| {
+        std.debug.print("Failed to start server: {}\n", .{err});
+        std.debug.print("Make sure port {d} is available and you have permission to bind to it.\n", .{config.port});
+        return err;
+    };
 
     printServerBanner(config);
 
