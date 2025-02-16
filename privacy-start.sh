@@ -14,42 +14,6 @@ handle_error() {
     exit 1
 }
 
-verify_ssl_certs() {
-    local domain=$1
-    local cert_path="/app/certs/live/${domain}"
-    
-    log_message "Verifying SSL certificates for ${domain}..."
-    
-    if [ ! -d "$cert_path" ]; then
-        log_message "ERROR: Certificate directory not found: ${cert_path}"
-        return 1
-    fi
-    
-    if [ ! -f "${cert_path}/fullchain.pem" ]; then
-        log_message "ERROR: fullchain.pem not found"
-        return 1
-    fi
-    
-    if [ ! -f "${cert_path}/privkey.pem" ]; then
-        log_message "ERROR: privkey.pem not found"
-        return 1
-    fi
-    
-    openssl x509 -in "${cert_path}/fullchain.pem" -text -noout > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        log_message "ERROR: Invalid certificate"
-        return 1
-    fi
-    
-    local expiry=$(openssl x509 -in "${cert_path}/fullchain.pem" -enddate -noout | cut -d= -f2)
-    log_message "Certificate valid until: ${expiry}"
-    
-    local subject=$(openssl x509 -in "${cert_path}/fullchain.pem" -subject -noout)
-    log_message "Certificate subject: ${subject}"
-    
-    return 0
-}
-
 cat > /etc/tor/torrc << EOL || handle_error "Failed to create torrc"
 SocksPort 127.0.0.1:9050
 
@@ -131,34 +95,5 @@ else
     log_message "I2P disabled, skipping..."
 fi
 
-# Handle SSL certificate generation if needed
-if [ "$USE_SSL" = "true" ]; then
-    log_message "SSL enabled, verifying certificates..."
-    if [ -z "$DOMAIN" ]; then
-        handle_error "SSL enabled but no domain specified"
-    fi
-    
-    # Create certs directory and link certificates
-    mkdir -p "/app/certs/live/$DOMAIN"
-    ln -sf "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "/app/certs/live/$DOMAIN/fullchain.pem"
-    ln -sf "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "/app/certs/live/$DOMAIN/privkey.pem"
-    
-    if verify_ssl_certs "$DOMAIN"; then
-        log_message "SSL certificates verified successfully"
-    else
-        handle_error "SSL certificate verification failed"
-    fi
-fi
-
 log_message "Starting Zap server..."
-if [ "$USE_SSL" = "true" ] && [ -d "/app/certs/live/$DOMAIN" ]; then
-    log_message "Starting with SSL on port $PORT"
-    ./zapped-starter --ssl \
-        --cert "/app/certs/live/$DOMAIN/fullchain.pem" \
-        --key "/app/certs/live/$DOMAIN/privkey.pem" || handle_error "Failed to start Zap server with SSL"
-else
-    if [ "$USE_SSL" = "true" ]; then
-        log_message "WARNING: SSL enabled but certificates not found, starting without SSL"
-    fi
-    ./zapped-starter || handle_error "Failed to start Zap server"
-fi
+./zapped-starter || handle_error "Failed to start Zap server"

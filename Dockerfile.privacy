@@ -80,7 +80,7 @@ ENV PORT=3000 \
     TOR_PORT=9050 \
     I2P_SAM_PORT=7656
 
-EXPOSE 3000 3443 9050 7656
+EXPOSE 3000 9050 7656
 
 COPY --chown=privacyuser:privacyuser privacy-start.sh ./
 RUN chmod +x privacy-start.sh

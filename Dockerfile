@@ -59,7 +59,7 @@ ENV PORT=3000 \
     DOMAIN="" \
     EMAIL=""
 
-EXPOSE 3000 3443
+EXPOSE 3000
 
 COPY --chown=appuser:appuser start.sh ./
 RUN chmod +x start.sh

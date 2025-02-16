@@ -28,8 +28,6 @@ A secure and fast [Zig Zap](https://zigzap.org/) web server with built-in privac
   - Metrics endpoint
   - Memory stats
   - Request tracking
-- 🔐 SSL Support
-  - Automatic certificate generation
 - 🐋 Containers
   - Docker
   - Podman
@@ -68,27 +66,6 @@ git clone https://github.com/Sudo-Ivan/zapped.git
 cd zapped
 ```
 
-# With SSL
-
-> make sure port 80/443 is open on server
-
-```bash
-make docker-run-ssl DOMAIN=example.com EMAIL=admin@example.com
-```
-
-# Check SSL certificates
-```bash
-make check-certs DOMAIN=example.com
-```
-
-# Run with SSL + Tor + I2P
-```bash
-make docker-run-privacy-ssl DOMAIN=example.com EMAIL=admin@example.com
-
-# Run with SSL + Tor
-make docker-run-ssl DOMAIN=example.com EMAIL=admin@example.com USE_I2P=true
-```
-
 ## Privacy Features
 
 ### Tor Hidden Services
@@ -111,14 +88,3 @@ Edit `zapped.json` to customize:
 - Cache control
 - CORS settings
 - Rate limiting
-
-## Port Configuration Issues
-
-For non-root port binding (80/443), you can either:
-
-1. Set system-wide unprivileged port start:
-```bash
-sudo sysctl net.ipv4.ip_unprivileged_port_start=80
-```
-
-2. Or use higher ports (3000/3443) with reverse proxy
